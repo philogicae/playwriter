@@ -27,7 +27,7 @@ export type ExtensionStatus = {
 export async function getRelayServerVersion(port: number = RELAY_PORT): Promise<string | null> {
   try {
     const response = await fetch(`http://127.0.0.1:${port}/version`, {
-      signal: AbortSignal.timeout(500),
+      signal: AbortSignal.timeout(2000),
     })
     if (!response.ok) {
       return null

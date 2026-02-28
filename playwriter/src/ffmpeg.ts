@@ -14,8 +14,8 @@ import path from 'node:path'
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Seconds of normal-speed buffer kept before and after each execution */
-export const INTERACTION_BUFFER_SECONDS = 1
+/** Seconds of normal-speed buffer kept before and after each execution (0.5s each side = 1s total) */
+export const INTERACTION_BUFFER_SECONDS = 0.5
 
 // ---------------------------------------------------------------------------
 // Hardware encoder detection
@@ -635,13 +635,13 @@ export interface ExecutionTimestamp {
 export function computeIdleSections({
     executionTimestamps,
     totalDurationMs,
-    speed = 5,
+    speed = 6,
     bufferSeconds = INTERACTION_BUFFER_SECONDS,
 }: {
     executionTimestamps: ExecutionTimestamp[]
     /** Total recording duration in milliseconds (from stopRecording result) */
     totalDurationMs: number
-    /** Speed multiplier for idle sections (default 5) */
+    /** Speed multiplier for idle sections (default 6) */
     speed?: number
     /** Override the default buffer around each execution (seconds) */
     bufferSeconds?: number
@@ -711,7 +711,7 @@ export interface CreateDemoVideoOptions {
     durationMs: number
     /** Execution timestamps (from stopRecording result) */
     executionTimestamps: ExecutionTimestamp[]
-    /** Speed multiplier for idle sections (default 5) */
+    /** Speed multiplier for idle sections (default 6) */
     speed?: number
     /** Output file path (defaults to recordingPath with `-demo` suffix) */
     outputFile?: string
@@ -722,8 +722,8 @@ export interface CreateDemoVideoOptions {
  * Create a demo video from a recording by speeding up idle sections
  * (gaps between execute() calls) while keeping interactions at normal speed.
  *
- * A 1-second buffer (INTERACTION_BUFFER_SECONDS) is preserved around each
- * interaction so viewers see context before and after each action.
+ * A 0.5-second buffer (INTERACTION_BUFFER_SECONDS) is preserved on each side of
+ * an interaction (1 second total) so viewers see context before and after each action.
  *
  * Requires `ffmpeg` and `ffprobe` installed on the system.
  *
@@ -736,7 +736,7 @@ export async function createDemoVideo(
         recordingPath,
         durationMs,
         executionTimestamps,
-        speed = 5,
+        speed = 6,
         signal,
     } = options
 

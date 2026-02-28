@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.73
+
+### Bug Fixes
+
+- **Service worker keepalive via chrome.alarms**: Added `chrome.alarms` keepalive to prevent Chrome MV3 from terminating the service worker when idle. Without this, the `maintainLoop` stops, the WebSocket closes, and the extension silently disconnects from the relay server — causing `session new` to fail with "Extension did not connect within timeout."
+
 ## 0.0.72
 
 ### Bug Fixes

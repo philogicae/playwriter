@@ -1,6 +1,36 @@
 # Changelog
 
+## 0.0.84
+
+### Docs
+
+- **Remove click-timeout section from `skill.md` mistakes list**: Deleted the dedicated post-click timeout section per docs cleanup request and renumbered the following mistake item.
+
+## 0.0.83
+
+### Docs
+
+- **Correct click-timeout guidance in `skill.md`**: Replaced the incorrect "SPA does not fire load" explanation with the actual behavior: click succeeds, then Playwright times out during post-click navigation waiting when action timeout budget is exceeded.
+
+## 0.0.82
+
+### Improvements
+
+- **Increase default action timeout to 60s**: Raised `context.setDefaultTimeout` from `5000ms` to `60000ms` to avoid false click failures on slower real-world flows where the interaction succeeds but Playwright post-action navigation waiting exceeds short budgets.
+
+## 0.0.81
+
+### Improvements
+
+- **Increase default action timeout to 5s**: Raised `context.setDefaultTimeout` from `2000ms` to `5000ms` to reduce false `locator.click()` timeouts on slower navigation flows (for example GitHub/Turbo links) where the click succeeds but post-click navigation settling exceeds 2 seconds. Default navigation timeout remains `10000ms`.
+
 ## 0.0.80
+
+### Bug Fixes
+
+- **Relaxed relay server version check timeout**: Increased `getRelayServerVersion` timeout from 500ms to 2000ms to prevent false "server not running" detections that kill a healthy relay server and disconnect the extension. This was causing intermittent `session new` failures when the relay was briefly busy (e.g. processing recording chunks).
+
+## 0.0.80 (previous)
 
 ### Improvements
 

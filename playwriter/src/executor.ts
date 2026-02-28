@@ -592,9 +592,10 @@ export class PlaywrightExecutor {
     const contexts = browser.contexts()
     const context = contexts.length > 0 ? contexts[0] : await browser.newContext()
 
-    // Action timeout (click, fill, hover, etc.) is short for fast agent failure.
-    // Navigation timeout (goto, reload) is longer since page loads are slower.
-    context.setDefaultTimeout(2000)
+    // Action timeout (click, fill, hover, etc.) is longer to tolerate slower
+    // SPA/Turbo navigations and post-click settling on real sites.
+    // Navigation timeout (goto, reload) remains separate.
+    context.setDefaultTimeout(60000)
     context.setDefaultNavigationTimeout(10000)
 
     context.on('page', (page) => {
@@ -674,9 +675,10 @@ export class PlaywrightExecutor {
     const contexts = browser.contexts()
     const context = contexts.length > 0 ? contexts[0] : await browser.newContext()
 
-    // Action timeout (click, fill, hover, etc.) is short for fast agent failure.
-    // Navigation timeout (goto, reload) is longer since page loads are slower.
-    context.setDefaultTimeout(2000)
+    // Action timeout (click, fill, hover, etc.) is longer to tolerate slower
+    // SPA/Turbo navigations and post-click settling on real sites.
+    // Navigation timeout (goto, reload) remains separate.
+    context.setDefaultTimeout(60000)
     context.setDefaultNavigationTimeout(10000)
 
     context.on('page', (page) => {

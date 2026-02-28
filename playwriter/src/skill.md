@@ -440,31 +440,7 @@ await state.page.evaluate(() => document.querySelector('button').click())
 await state.page.getByRole('radio', { name: 'Node.js' }).click()
 ```
 
-**13. SPA/Turbo navigation makes `click()` time out**
-Sites using Turbo (GitHub), Next.js soft nav, or other SPA routers intercept link clicks and update the URL without firing the browser's standard `load` event. Playwright's `click()` sees the navigation start and waits for it to complete — but the load event never fires, so it times out even though the navigation succeeded.
-
-Symptoms: `locator.click: Timeout Xms exceeded` with logs showing `navigated to "..."` underneath — the click worked, Playwright just timed out waiting for cleanup.
-
-Fix: add `.catch(() => {})` on the click, or raise `timeout`, or use `{ noWaitAfter: true }` then wait manually:
-
-```js
-// Pattern 1: swallow the navigation-wait timeout (click still fired)
-await state.page.locator('a.notification-link').first().click({ timeout: 10000 }).catch(() => {})
-await state.page.waitForTimeout(1500) // give SPA time to render
-
-// Pattern 2: skip the post-click navigation wait entirely
-await state.page.locator('a.notification-link').first().click({ noWaitAfter: true })
-await state.page.waitForLoadState('domcontentloaded').catch(() => {})
-await state.page.waitForTimeout(1000)
-
-// Pattern 3: catch at waitForLoadState instead
-await state.page.locator('a').first().click()
-await state.page.waitForLoadState('domcontentloaded').catch(() => {})
-```
-
-Always verify the URL afterwards with `console.log(state.page.url())` — the navigation typically did happen.
-
-**14. Over-investigating instead of just interacting**
+**13. Over-investigating instead of just interacting**
 When something doesn't respond to a click, do NOT start inspecting CDP event listeners, React fibers, canvas pixel data, or writing `page.evaluate()` to read class names and bounding boxes. This wastes massive context. Instead:
 
 1. Take a `snapshot()` — it shows every interactive element and what to click
