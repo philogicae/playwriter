@@ -440,7 +440,31 @@ await state.page.evaluate(() => document.querySelector('button').click())
 await state.page.getByRole('radio', { name: 'Node.js' }).click()
 ```
 
-**13. Over-investigating instead of just interacting**
+**13. SPA/Turbo navigation makes `click()` time out**
+Sites using Turbo (GitHub), Next.js soft nav, or other SPA routers intercept link clicks and update the URL without firing the browser's standard `load` event. Playwright's `click()` sees the navigation start and waits for it to complete — but the load event never fires, so it times out even though the navigation succeeded.
+
+Symptoms: `locator.click: Timeout Xms exceeded` with logs showing `navigated to "..."` underneath — the click worked, Playwright just timed out waiting for cleanup.
+
+Fix: add `.catch(() => {})` on the click, or raise `timeout`, or use `{ noWaitAfter: true }` then wait manually:
+
+```js
+// Pattern 1: swallow the navigation-wait timeout (click still fired)
+await state.page.locator('a.notification-link').first().click({ timeout: 10000 }).catch(() => {})
+await state.page.waitForTimeout(1500) // give SPA time to render
+
+// Pattern 2: skip the post-click navigation wait entirely
+await state.page.locator('a.notification-link').first().click({ noWaitAfter: true })
+await state.page.waitForLoadState('domcontentloaded').catch(() => {})
+await state.page.waitForTimeout(1000)
+
+// Pattern 3: catch at waitForLoadState instead
+await state.page.locator('a').first().click()
+await state.page.waitForLoadState('domcontentloaded').catch(() => {})
+```
+
+Always verify the URL afterwards with `console.log(state.page.url())` — the navigation typically did happen.
+
+**14. Over-investigating instead of just interacting**
 When something doesn't respond to a click, do NOT start inspecting CDP event listeners, React fibers, canvas pixel data, or writing `page.evaluate()` to read class names and bounding boxes. This wastes massive context. Instead:
 
 1. Take a `snapshot()` — it shows every interactive element and what to click
@@ -938,6 +962,8 @@ Labels are color-coded: yellow=links, orange=buttons, coral=inputs, pink=checkbo
 
 While recording is active, Playwriter automatically overlays a smooth ghost cursor that follows automated mouse actions (`page.mouse.*`, `locator.click()`, hover flows) using `page.onMouseAction` from the Playwright fork.
 
+**Ghost cursor survives MPA navigation**: when recording starts, the cursor bundle is registered via `Page.addScriptToEvaluateOnNewDocument`, so Chrome re-injects and re-enables it on every new document. This means the cursor is visible across full-page navigations (GitHub, Hacker News, etc.) without any extra work.
+
 For demos where cursor movement should be visible and human-like, drive the page with interaction methods (`locator.click()`, `page.click()`, `page.mouse.move()`, `press`, typing). Avoid skipping interactions with direct state jumps (for example, `goto(itemUrl)` instead of clicking the link) when your goal is to show realistic pointer motion in the recording.
 
 **Note**: Recording requires the user to have clicked the Playwriter extension icon on the tab. This grants `activeTab` permission needed for `chrome.tabCapture`. Recording works on tabs where the icon was clicked - if you need to record a new tab, ask the user to click the icon on it first.
@@ -957,9 +983,11 @@ await state.page.click('a')
 await state.page.waitForLoadState('domcontentloaded')
 await state.page.goBack()
 
-// Stop and get result
-const { path, duration, size } = await recording.stop({ page: state.page })
-console.log(`Saved ${size} bytes, duration: ${duration}ms`)
+// Stop and get result — always capture the full result including executionTimestamps
+// if you plan to call createDemoVideo. Save to state if using separate execute calls.
+const result = await recording.stop({ page: state.page })
+state.recordingResult = result
+console.log(`Saved ${result.size} bytes, duration: ${result.duration}ms, timestamps: ${result.executionTimestamps.length}`)
 ```
 
 Additional recording utilities:
@@ -993,7 +1021,7 @@ await ghostCursor.hide({ page: state.page })
 
 While recording is active, playwriter tracks when each `execute()` call starts and ends. `recording.stop()` returns these timestamps alongside the video file. `createDemoVideo` uses this data to identify idle gaps and speed them up with ffmpeg in a single pass.
 
-A 1-second buffer is preserved around each interaction so viewers see context before and after each action.
+A 0.5-second buffer is preserved on each side of an interaction (1 second total) so viewers see context before and after each action.
 
 Requires `ffmpeg` and `ffprobe` installed on the system.
 
@@ -1010,15 +1038,18 @@ await recording.start({ page: state.page, outputPath: './recording.mp4' })
 ```
 
 ```js
-// Stop recording — executionTimestamps is included in the result
-const recordingResult = await recording.stop({ page: state.page })
+// Stop recording — save the FULL result to state if createDemoVideo runs in a separate execute call
+// (executionTimestamps is what powers the idle detection — don't destructure it away)
+state.recordingResult = await recording.stop({ page: state.page })
+console.log(`${state.recordingResult.executionTimestamps.length} timestamps captured`)
 
-// Create demo video — idle gaps are sped up 4x (default)
+// Create demo video — idle gaps are sped up 6x by default
+// Run this in a SEPARATE execute call with --timeout 120000 or higher
 const demoPath = await createDemoVideo({
-  recordingPath: recordingResult.path,
-  durationMs: recordingResult.duration,
-  executionTimestamps: recordingResult.executionTimestamps,
-  speed: 5, // optional, default 5x for idle sections
+  recordingPath: state.recordingResult.path,
+  durationMs: state.recordingResult.duration,
+  executionTimestamps: state.recordingResult.executionTimestamps,
+  speed: 6, // optional, default 6x for idle sections
   // outputFile: './demo.mp4', // optional, defaults to recording-demo.mp4
 })
 console.log('Demo video:', demoPath)
