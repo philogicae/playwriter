@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.76
+
+### Bug Fixes
+
+- **Write Prism assets to the active extension output directory**: `scripts/download-prism.ts` now respects `PLAYWRITER_EXTENSION_DIST` instead of always writing to `dist/src`. This fixes release builds (`dist-release`) missing `prism.min.js` and `prism-bash.min.js` used by `welcome.html`.
+
 ## 0.0.75
 
 ### Changes

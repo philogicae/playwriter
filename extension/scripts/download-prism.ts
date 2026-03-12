@@ -1,11 +1,12 @@
-// Downloads Prism.js assets into dist/src/ for the welcome page.
+// Downloads Prism.js assets into <outDir>/src/ for the welcome page.
 // Chrome extension CSP blocks external scripts, so we bundle them locally.
 import https from 'node:https'
 import fs from 'node:fs'
 import path from 'node:path'
 
 const BASE = 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/'
-const DEST = path.join('dist', 'src')
+const outDir = process.env.PLAYWRITER_EXTENSION_DIST || 'dist'
+const DEST = path.join(outDir, 'src')
 
 const files: [string, string][] = [
   ['prism.min.js', 'prism.min.js'],
