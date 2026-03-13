@@ -1,11 +1,11 @@
 {
-  "name": "playwriter",
+  "name": "@philogicae/playwriter",
   "description": "",
   "version": "0.0.89",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "repository": "https://github.com/remorses/playwriter",
+  "repository": "https://github.com/philogicae/playwriter",
   "scripts": {
     "build": "rm -rf dist *.tsbuildinfo && mkdir dist && bun scripts/build-client-bundles.ts && tsc && bun scripts/build-resources.ts",
     "prepublishOnly": "pnpm build",
@@ -16,7 +16,9 @@
     "test": "vitest run -u",
     "test:watch": "vitest"
   },
-  "bin": "./bin.js",
+  "bin": {
+    "playwriter": "./bin.js"
+  },
   "files": [
     "dist",
     "src",
